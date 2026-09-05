@@ -97,6 +97,14 @@ class AgentLoopWorker:
             for t, s in TOOL_SPECS.items())
         system = TOOLS_PROMPT.format(tools=tool_list, user=user)
         messages = [{"role": "user", "content": system}]
+        sid = payload.get("session_id", "default")
+        if getattr(self, "sessions", None):
+            history = self.sessions.context(sid)
+            if history:
+                # compact history into one context block to keep the tool prompt first
+                hist = "\n".join(f"{m['role']}: {m['content'][:400]}" for m in history)
+                messages.append({"role": "user",
+                                 "content": "Conversation so far:\n" + hist})
         trace = []
 
         for step in range(self.max_steps):
@@ -110,6 +118,9 @@ class AgentLoopWorker:
             if "answer" in decision and "tool" not in decision:
                 out = {"ok": True, "worker": self.name, "text": decision["answer"],
                        "steps": step + 1, "trace": trace}
+                if getattr(self, "sessions", None):
+                    self.sessions.append(sid, "user", user)
+                    self.sessions.append(sid, "assistant", decision["answer"])
                 break
 
             tool = decision.get("tool", "")
@@ -136,4 +147,9 @@ class AgentLoopWorker:
 
     def attach(self, bus):
         self.bus = bus
+        return self
+
+    def attach_sessions(self, sessions):
+        from .sessions import Sessions
+        self.sessions: Sessions = sessions
         return self

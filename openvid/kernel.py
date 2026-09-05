@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 
 from .bus import Bus
+from .sessions import Sessions
 
 
 class Kernel:
@@ -19,6 +20,7 @@ class Kernel:
         self._threads: list[threading.Thread] = []
         self._running = False
         self.gate = self._load_gate()
+        self.sessions = Sessions(self.home)
 
     def _load_gate(self) -> dict:
         cfg = self.home / "gate.json"
@@ -100,9 +102,10 @@ class Kernel:
     def stop(self):
         self._running = False
 
-    def ask(self, text: str, timeout: float = 240.0) -> str:
+    def ask(self, text: str, timeout: float = 240.0, session_id: str = "default") -> str:
         """Full turn: user.input -> llm -> answer (matched via reply_to)."""
-        eid = self.bus.publish("user.input", {"text": text, "_eid": "", "ts": time.time()})
+        eid = self.bus.publish("user.input", {"text": text, "_eid": "",
+                                              "session_id": session_id, "ts": time.time()})
         # stamp eid into the pending event so the llm worker echoes it back
         evs = self.bus.claim("user.input", "kernel-stamp")
         for ev in evs:

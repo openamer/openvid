@@ -80,7 +80,11 @@ def run(port: int = 8765, home=None):
             except json.JSONDecodeError:
                 return self._send(400, {"error": "bad json"})
             if self.path == "/ask":
-                return self._send(200, {"answer": k.ask(payload.get("text", ""))})
+                return self._send(200, {"answer": k.ask(
+                    payload.get("text", ""), session_id=payload.get("session_id", "default"))})
+            if self.path == "/reset":
+                k.sessions.reset(payload.get("session_id", "default"))
+                return self._send(200, {"ok": True})
             if self.path == "/action":
                 eid = k.bus.publish("agent.action", payload)
                 return self._send(200, {"eid": eid})
