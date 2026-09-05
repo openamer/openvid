@@ -24,6 +24,7 @@ from .files import FileWorker
 from .web import WebWorker
 from .sysinfo import SysWorker
 from .swarm import SwarmWorker
+from .adaptive_llm import AdaptiveLocalLLM
 from .selfimprove import SelfImprovement
 from .learnloop import LearnLoop
 from .webui import WEBUI_HTML
@@ -38,6 +39,8 @@ def _build_kernel(home=None) -> Kernel:
     k.register(WebWorker())
     k.register(SysWorker())
     k.register(SwarmWorker())
+    if os.environ.get("OPENVID_ADAPTIVE_LOCAL", "1") == "1":
+        k.register(AdaptiveLocalLLM(k.home))
     base = os.environ.get("OPENVID_LLM_BASE", "https://openrouter.ai/api/v1")
     key = os.environ.get("OPENVID_LLM_KEY") or os.environ.get("OPENROUTER_API_KEY", "")
     model = os.environ.get("OPENVID_LLM_MODEL", "z-ai/glm-5.3-flash")

@@ -1,0 +1,10 @@
+{
+  "pairs": 12,
+  "epochs": 40,
+  "avg_loss": 1.358793729233245,
+  "first_loss": 5.827269077301025,
+  "last_loss": 0.1982744187116623,
+  "improved": true,
+  "seconds": 218.6,
+  "out": "adapters\\run2"
+}
