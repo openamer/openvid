@@ -32,7 +32,13 @@ def _build_kernel(home=None) -> Kernel:
     key = os.environ.get("OPENVID_LLM_KEY") or os.environ.get("OPENROUTER_API_KEY", "")
     model = os.environ.get("OPENVID_LLM_MODEL", "z-ai/glm-5.3-flash")
     if key:
-        k.register(LLMWorker(base, key, model))
+        if os.environ.get("OPENVID_AGENT_MODE", "1") != "0":
+            # full agent loop: LLM decides tool usage (default)
+            from .agent_loop import AgentLoopWorker
+            k.register(AgentLoopWorker(base, key, model,
+                                       max_steps=8).attach(k.bus).attach_sessions(k.sessions))
+        else:
+            k.register(LLMWorker(base, key, model))
     return k
 
 
