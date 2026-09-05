@@ -94,7 +94,7 @@ class AdaptiveLocalLLM:
                                "messages": [{"role": "user", "content": text}]}).encode()
             req = urllib.request.Request(self.ollama_url + "/api/chat", data=body,
                                          headers={"Content-Type": "application/json"})
-            with urllib.request.urlopen(req, timeout=120) as r:
+            with urllib.request.urlopen(req, timeout=300) as r:
                 d = json.loads(r.read())
             return {"ok": True, "worker": self.name,
                     "text": (d.get("message", {}).get("content") or "").strip()}
