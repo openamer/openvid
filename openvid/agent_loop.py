@@ -107,6 +107,16 @@ class AgentLoopWorker:
                                  "content": "Conversation so far:\n" + hist})
         trace = []
 
+        try:
+            out = self._run_loop(messages, bus, eid, user, sid, trace)
+        except Exception as e:
+            out = {"ok": False, "worker": self.name,
+                   "text": f"agent error: {type(e).__name__}: {e}"}
+        if eid:
+            out["reply_to"] = eid
+        return out
+
+    def _run_loop(self, messages, bus, eid, user, sid, trace):
         for step in range(self.max_steps):
             raw = self._chat(messages)
             m = re.search(r"\{.*\}", raw, re.S)
@@ -121,7 +131,7 @@ class AgentLoopWorker:
                 if getattr(self, "sessions", None):
                     self.sessions.append(sid, "user", user)
                     self.sessions.append(sid, "assistant", decision["answer"])
-                break
+                return out
 
             tool = decision.get("tool", "")
             if tool not in TOOL_SPECS:
@@ -140,9 +150,6 @@ class AgentLoopWorker:
             out = {"ok": False, "worker": self.name,
                    "text": "(max steps reached without final answer)",
                    "steps": self.max_steps, "trace": trace}
-
-        if eid:
-            out["reply_to"] = eid
         return out
 
     def attach(self, bus):
