@@ -27,7 +27,10 @@ class Kernel:
         if cfg.exists():
             return json.loads(cfg.read_text(encoding="utf-8"))
         default = {
-            "allow": ["shell.run", "memory.read", "memory.write", "llm.chat"],
+            "allow": ["shell.run", "memory.read", "memory.write", "llm.chat", "file.read",
+                      "file.write", "file.list", "file.delete", "web.fetch", "web.search",
+                      "browser.open", "browser.eval", "skill.get", "skill.list", "sys.info",
+                      "swarm.status", "swarm.ask", "swarm.run"],
             "confirm": ["shell.rm", "shell.sudo"],
             "deny": []
         }

@@ -20,6 +20,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from .kernel import Kernel
 from .workers import LLMWorker, MemoryWorker, ShellWorker
 from .skills import SkillWorker
+from .files import FileWorker
+from .web import WebWorker
+from .sysinfo import SysWorker
+from .swarm import SwarmWorker
 from .webui import WEBUI_HTML
 
 
@@ -28,6 +32,10 @@ def _build_kernel(home=None) -> Kernel:
     k.register(ShellWorker())
     k.register(MemoryWorker(k.home))
     k.register(SkillWorker(k.home))
+    k.register(FileWorker(k.home))
+    k.register(WebWorker())
+    k.register(SysWorker())
+    k.register(SwarmWorker())
     base = os.environ.get("OPENVID_LLM_BASE", "https://openrouter.ai/api/v1")
     key = os.environ.get("OPENVID_LLM_KEY") or os.environ.get("OPENROUTER_API_KEY", "")
     model = os.environ.get("OPENVID_LLM_MODEL", "z-ai/glm-5.3-flash")
@@ -67,6 +75,7 @@ def run(port: int = 8765, home=None):
             if self.path == "/health":
                 return self._send(200, {
                     "status": "alive", "workers": list(k.workers),
+                    "gpu_hint": os.environ.get("OPENVID_GPU_URL", ""),
                     "pending": {t: k.bus.pending(t) for t in
                                 ("user.input", "agent.action", "worker.result")}})
             if self.path.startswith("/result/"):
@@ -74,7 +83,7 @@ def run(port: int = 8765, home=None):
                 for ev in k.bus.claim("worker.result", "http"):
                     p = ev["payload"]
                     k.bus.complete(ev["id"])
-                    if p.get("reply_to") == eid:
+                    if p.get("reply_to") == eid or p.get("_rid") == eid:
                         return self._send(200, p)
                 return self._send(404, {"error": "not ready or unknown eid"})
             self._send(404, {"error": "unknown"})
@@ -92,7 +101,13 @@ def run(port: int = 8765, home=None):
                 k.sessions.reset(payload.get("session_id", "default"))
                 return self._send(200, {"ok": True})
             if self.path == "/action":
-                eid = k.bus.publish("agent.action", payload)
+                eid = k.bus.publish("agent.action", {**payload, "_rid": ""})
+                # stamp eid as _rid (claim+republish like kernel.ask does)
+                for ev in k.bus.claim("agent.action", "http-stamp"):
+                    p = ev["payload"]; p["_rid"] = ev["eid"]
+                    k.bus.complete(ev["id"])
+                    k.bus.publish("agent.action", p)
+                    eid = ev["eid"]
                 return self._send(200, {"eid": eid})
             self._send(404, {"error": "unknown"})
 

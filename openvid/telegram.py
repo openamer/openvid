@@ -14,6 +14,10 @@ import urllib.request
 from .kernel import Kernel
 from .workers import LLMWorker, MemoryWorker, ShellWorker
 from .skills import SkillWorker
+from .files import FileWorker
+from .web import WebWorker
+from .sysinfo import SysWorker
+from .swarm import SwarmWorker
 
 API = "https://api.telegram.org/bot{token}/{method}"
 
@@ -38,6 +42,10 @@ def run(home=None):
     k.register(ShellWorker())
     k.register(MemoryWorker(k.home))
     k.register(SkillWorker(k.home))
+    k.register(FileWorker(k.home))
+    k.register(WebWorker())
+    k.register(SysWorker())
+    k.register(SwarmWorker())
     base = os.environ.get("OPENVID_LLM_BASE", "https://openrouter.ai/api/v1")
     key = os.environ.get("OPENVID_LLM_KEY") or os.environ.get("OPENROUTER_API_KEY", "")
     model = os.environ.get("OPENVID_LLM_MODEL", "z-ai/glm-5.3-flash")

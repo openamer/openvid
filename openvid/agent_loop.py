@@ -44,6 +44,19 @@ TOOL_SPECS = {
     "skill.get": {"args": {"name": "skill name"},
                   "desc": "Load a skill's instructions."},
     "skill.list": {"args": {}, "desc": "List available skills."},
+    "file.read": {"args": {"path": "relative or allowed-absolute path"},
+                  "desc": "Read a text file (max 20k chars)."},
+    "file.write": {"args": {"path": "file path", "content": "text to write"},
+                   "desc": "Create/overwrite a text file."},
+    "file.list": {"args": {"path": "directory (empty = root)"},
+                  "desc": "List files recursively."},
+    "file.delete": {"args": {"path": "file or dir"},
+                    "desc": "Delete a file or directory (sandboxed)."},
+    "web.fetch": {"args": {"url": "http(s) url"},
+                  "desc": "Fetch a web page, returns readable text."},
+    "web.search": {"args": {"query": "search terms"},
+                   "desc": "Web search (DuckDuckGo), returns top results."},
+    "sys.info": {"args": {}, "desc": "CPU/RAM/disk/uptime snapshot of this machine."},
 }
 
 
