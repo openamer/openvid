@@ -11,3 +11,5 @@ _*.txt
 build/
 dist/
 .env
+ov-*/
+adapters/
