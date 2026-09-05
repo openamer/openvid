@@ -1,0 +1,12 @@
+{"messages": [{"role": "user", "content": "Say OPENVID-OK"}, {"role": "assistant", "content": "OPENVID-OK"}]}
+{"messages": [{"role": "user", "content": "Say OPENVID-CLI-OK"}, {"role": "assistant", "content": "OPENVID-CLI-OK"}]}
+{"messages": [{"role": "user", "content": "Say HTTP-OK"}, {"role": "assistant", "content": "HTTP-OK"}]}
+{"messages": [{"role": "user", "content": "Say WEBUI-OK"}, {"role": "assistant", "content": "WEBUI-OK"}]}
+{"messages": [{"role": "user", "content": "Say SWARM-OK"}, {"role": "assistant", "content": "SWARM-OK"}]}
+{"messages": [{"role": "user", "content": "Say LOCAL-OK"}, {"role": "assistant", "content": "LOCAL-OK"}]}
+{"messages": [{"role": "user", "content": "Say VERIFY3"}, {"role": "assistant", "content": "VERIFY3"}]}
+{"messages": [{"role": "user", "content": "Say VERIFY4"}, {"role": "assistant", "content": "VERIFY4"}]}
+{"messages": [{"role": "user", "content": "Say VERIFY-LOCAL"}, {"role": "assistant", "content": "VERIFY-LOCAL"}]}
+{"messages": [{"role": "user", "content": "Say KERNEL-LOCAL-OK"}, {"role": "assistant", "content": "KERNEL-LOCAL-OK"}]}
+{"messages": [{"role": "user", "content": "Use the shell.run tool to execute: echo AGENT-TOOLS-OK. Then answer with the output."}, {"role": "assistant", "content": "The command executed successfully. Output: AGENT-TOOLS-OK"}]}
+{"messages": [{"role": "user", "content": "Remember via memory.write that openvid rocks, then confirm."}, {"role": "assistant", "content": "Saved. openvid rocks."}]}
