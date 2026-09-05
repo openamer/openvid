@@ -20,6 +20,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from .kernel import Kernel
 from .workers import LLMWorker, MemoryWorker, ShellWorker
 from .skills import SkillWorker
+from .webui import WEBUI_HTML
 
 
 def _build_kernel(home=None) -> Kernel:
@@ -49,6 +50,14 @@ def run(port: int = 8765, home=None):
             self.wfile.write(body)
 
         def do_GET(self):
+            if self.path == "/" or self.path.startswith("/index"):
+                body = WEBUI_HTML.encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
             if self.path == "/health":
                 return self._send(200, {
                     "status": "alive", "workers": list(k.workers),
