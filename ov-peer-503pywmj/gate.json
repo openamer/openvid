@@ -1,0 +1,13 @@
+{
+  "allow": [
+    "shell.run",
+    "memory.read",
+    "memory.write",
+    "llm.chat"
+  ],
+  "confirm": [
+    "shell.rm",
+    "shell.sudo"
+  ],
+  "deny": []
+}

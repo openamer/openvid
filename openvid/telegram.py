@@ -58,7 +58,7 @@ def run(home=None):
                 chat = msg.get("chat", {}).get("id")
                 if not text or chat is None:
                     continue
-                answer = k.ask(text, timeout=110.0)
+                answer = k.ask(text, timeout=230.0)
                 _tg(token, "sendMessage",
                     {"chat_id": chat, "text": answer[:4000]})
         except KeyboardInterrupt:

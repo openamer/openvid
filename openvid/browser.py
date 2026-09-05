@@ -19,6 +19,7 @@ def _cdp_json(path: str, port: int = 9222):
 class BrowserWorker:
     name = "browser"
     topics = ["agent.action"]
+    actions = {"browser.open", "browser.eval"}
 
     def __init__(self, port: int = 9222):
         self.port = port

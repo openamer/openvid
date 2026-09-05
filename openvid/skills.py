@@ -15,6 +15,7 @@ from pathlib import Path
 class SkillWorker:
     name = "skills"
     topics = ["agent.action"]
+    actions = {"skill.list", "skill.get", "skill.write"}
 
     def __init__(self, home: Path):
         self.dir = Path(home) / "skills"

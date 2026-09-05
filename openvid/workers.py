@@ -12,6 +12,7 @@ from pathlib import Path
 class ShellWorker:
     name = "shell"
     topics = ["agent.action"]
+    actions = {"shell.run"}
 
     def handle(self, payload: dict) -> dict:
         if payload.get("action") != "shell.run":
@@ -33,6 +34,7 @@ class ShellWorker:
 class MemoryWorker:
     name = "memory"
     topics = ["agent.action"]
+    actions = {"memory.read", "memory.write"}
 
     def __init__(self, home: Path):
         self.dir = Path(home) / "memory"

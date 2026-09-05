@@ -1,0 +1,9 @@
+[
+  {
+    "name": "t1",
+    "schedule": 5,
+    "prompt": "tick test",
+    "enabled": false,
+    "last_run": null
+  }
+]

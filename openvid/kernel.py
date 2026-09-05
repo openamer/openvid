@@ -15,6 +15,7 @@ class Kernel:
         self.home.mkdir(parents=True, exist_ok=True)
         self.bus = Bus(self.home / "bus.db")
         self.workers: dict[str, object] = {}
+        self._routes: dict[str, list] = {}
         self._threads: list[threading.Thread] = []
         self._running = False
         self.gate = self._load_gate()
@@ -34,8 +35,7 @@ class Kernel:
     def register(self, worker):
         self.workers[worker.name] = worker
         for topic in worker.topics:
-            t = threading.Thread(target=self._pump, args=(worker, topic), daemon=True)
-            self._threads.append(t)
+            self._routes.setdefault(topic, []).append(worker)
         return worker
 
     def _gate_check(self, action: str) -> bool:
@@ -43,40 +43,64 @@ class Kernel:
             return False
         return action in self.gate.get("allow", []) or action not in self.gate.get("confirm", [])
 
-    def _pump(self, worker, topic: str):
+    def _pump(self, topic: str, pairs: list):
+        """One pump per topic; routes each event to a worker whose `actions`
+        (or single-action mapping) matches the payload. Prevents event theft
+        when several workers share a topic."""
         while self._running:
-            events = self.bus.claim(topic, worker.name)
+            events = self.bus.claim(topic, "kernel-pump")
             if not events:
                 time.sleep(0.15)
                 continue
             for ev in events:
-                # permission gate for actions
-                if topic == "agent.action":
-                    action = ev["payload"].get("action", "")
-                    if not self._gate_check(action):
-                        self.bus.complete(ev["id"], {
-                            "eid": ev["eid"], "worker": worker.name,
-                            "ok": False, "error": f"denied by gate: {action}",
-                        })
-                        continue
+                payload = ev["payload"]
+                action = payload.get("action", "")
+                worker = self._route(topic, action)
+                if worker is None:
+                    self.bus.complete(ev["id"], {
+                        "ok": False, "error": f"no worker for action: {action}"})
+                    continue
+                # permission gate
+                if topic == "agent.action" and not self._gate_check(action):
+                    self.bus.complete(ev["id"], {
+                        "ok": False, "error": f"denied by gate: {action}"})
+                    continue
                 try:
-                    result = worker.handle(ev["payload"])
+                    result = worker.handle(payload)
+                    if isinstance(result, dict):
+                        # echo the caller's request-id so async loops can match
+                        if payload.get("_rid"):
+                            result["_rid"] = payload["_rid"]
                     self.bus.complete(ev["id"], result if isinstance(result, dict) else {"ok": True})
-                except Exception as e:  # worker crash must not kill the loop
+                except Exception as e:
                     self.bus.complete(ev["id"], {
                         "ok": False, "worker": worker.name,
-                        "error": f"{type(e).__name__}: {e}",
-                    })
+                        "error": f"{type(e).__name__}: {e}"})
+
+    def _route(self, topic: str, action: str):
+        """Pick the worker registered for this topic+action."""
+        candidates = self._routes.get(topic, [])
+        for w in candidates:
+            actions = getattr(w, "actions", None)
+            if actions is not None:
+                if action in actions:
+                    return w
+            else:
+                return w  # worker handles whole topic (e.g. agent-loop, llm)
+        return candidates[0] if candidates else None
 
     def start(self):
         self._running = True
+        for topic in self._routes:
+            t = threading.Thread(target=self._pump, args=(topic, []), daemon=True)
+            self._threads.append(t)
         for t in self._threads:
             t.start()
 
     def stop(self):
         self._running = False
 
-    def ask(self, text: str, timeout: float = 120.0) -> str:
+    def ask(self, text: str, timeout: float = 240.0) -> str:
         """Full turn: user.input -> llm -> answer (matched via reply_to)."""
         eid = self.bus.publish("user.input", {"text": text, "_eid": "", "ts": time.time()})
         # stamp eid into the pending event so the llm worker echoes it back

@@ -18,6 +18,7 @@ import urllib.request
 class SwarmWorker:
     name = "swarm"
     topics = ["agent.action"]
+    actions = {"swarm.status", "swarm.ask", "swarm.run"}
 
     def __init__(self, peers: list[str] | None = None):
         if peers is None:
