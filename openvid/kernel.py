@@ -31,7 +31,7 @@ class Kernel:
                       "file.write", "file.list", "file.delete", "web.fetch", "web.search",
                       "browser.open", "browser.eval", "skill.get", "skill.list", "sys.info",
                       "swarm.status", "swarm.ask", "swarm.run"],
-            "confirm": ["shell.rm", "shell.sudo"],
+            "confirm": ["shell.rm", "shell.sudo", "file.delete"],
             "deny": []
         }
         cfg.write_text(json.dumps(default, indent=2), encoding="utf-8")
@@ -46,7 +46,9 @@ class Kernel:
     def _gate_check(self, action: str) -> bool:
         if action in self.gate.get("deny", []):
             return False
-        return action in self.gate.get("allow", []) or action not in self.gate.get("confirm", [])
+        if action in self.gate.get("confirm", []):
+            return False  # confirm wins over allow: human-approval required
+        return True  # everything not denied/confirm is free
 
     def _pump(self, topic: str, pairs: list):
         """One pump per topic; routes each event to a worker whose `actions`
