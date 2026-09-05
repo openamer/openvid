@@ -57,6 +57,7 @@ TOOL_SPECS = {
     "web.search": {"args": {"query": "search terms"},
                    "desc": "Web search (DuckDuckGo), returns top results."},
     "sys.info": {"args": {}, "desc": "CPU/RAM/disk/uptime snapshot of this machine."},
+    "swarm.status": {"args": {}, "desc": "Check peer nodes in the swarm."},
 }
 
 

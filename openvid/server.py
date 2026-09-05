@@ -24,6 +24,8 @@ from .files import FileWorker
 from .web import WebWorker
 from .sysinfo import SysWorker
 from .swarm import SwarmWorker
+from .selfimprove import SelfImprovement
+from .learnloop import LearnLoop
 from .webui import WEBUI_HTML
 
 
@@ -53,6 +55,11 @@ def _build_kernel(home=None) -> Kernel:
 def run(port: int = 8765, home=None):
     k = _build_kernel(home)
     k.start()
+    # autonomous growth (auto_approve via env, default on)
+    auto = os.environ.get("OPENVID_AUTO_APPROVE", "1") == "1"
+    si = SelfImprovement(k.home, k.bus, auto_approve=auto)
+    si.start(interval=float(os.environ.get("OPENVID_SI_INTERVAL", "3600")))
+    LearnLoop(k.home, k.bus).start()
 
     class Handler(BaseHTTPRequestHandler):
         def _send(self, code, data):

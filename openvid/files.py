@@ -21,25 +21,32 @@ class FileWorker:
     def __init__(self, home: Path, extra_roots: list[str] | None = None):
         self.root = (Path(home) / "files").resolve()
         self.root.mkdir(parents=True, exist_ok=True)
-        self.roots = [self.root] + [Path(r).resolve() for r in
-                                    (extra_roots or os.environ.get(
-                                        "OPENVID_FILES_ROOT", "").split(",")
-                                     if os.environ.get("OPENVID_FILES_ROOT") else [])
-                                    if r.strip()]
+        if extra_roots is None:
+            env = os.environ.get("OPENVID_FILES_ROOT", "")
+            extra_roots = [r.strip() for r in env.split(",") if r.strip()]
+        self.roots = [self.root] + [Path(r).resolve() for r in extra_roots if str(r).strip()]
 
     def _resolve(self, path: str) -> Path | None:
-        """Resolve path into an allowed root; None if outside."""
+        """Resolve path into an allowed root; None if outside.
+        Tries each root in order (relative paths may belong to any root)."""
         if not path:
             return None
         p = Path(path)
+        if p.is_absolute():
+            try:
+                cand = p.resolve()
+            except (OSError, ValueError):
+                return None
+            return cand if any(str(cand).startswith(str(root)) for root in self.roots) else None
         for root in self.roots:
             try:
-                cand = (root / p).resolve() if not p.is_absolute() else p.resolve()
-                if str(cand).startswith(str(root)):
+                cand = (root / p).resolve()
+                if str(cand).startswith(str(root)) and cand.exists():
                     return cand
             except (OSError, ValueError):
                 continue
-        return None
+        # not found in any root: return primary-root candidate (for write/list)
+        return (self.root / p).resolve()
 
     def handle(self, payload: dict) -> dict:
         act = payload.get("action", "")
