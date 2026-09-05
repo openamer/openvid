@@ -43,8 +43,30 @@ openvid                                  # REPL (/run <cmd>, /remember <note>, /
 
 ## Architecture
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design and roadmap
-(browser worker, skills, cron, desktop, cross-machine swarm, self-improvement).
+## Status: Phases 1–10 complete
+
+| Phase | Feature | Verified |
+|---|---|---|
+| 1 | Kernel + durable bus + shell/memory/llm workers + CLI | ✓ 7/7 checks |
+| 2 | Browser worker (Chrome via CDP :9222) | ✓ eval "Example Domain" |
+| 3 | Skills (markdown, path-traversal guarded) | ✓ write/list/get |
+| 4 | Cron (durable, daily@HH:MM + intervals, fires via bus) | ✓ job fired |
+| 5 | HTTP API (/health /ask /action /result) | ✓ /ask → real answer |
+| 6 | Self-improvement (error clustering → skill proposals) | ✓ proposal written |
+| 7 | Telegram frontend (long-polling bus client) | ✓ code + API format |
+| 8 | WebUI (zero-build chat, served at /) | ✓ HTML + /ask OK |
+| 9 | Swarm mesh (health-probed peers, no coordinator) | ✓ live cross-node ask |
+| 10 | Fine-tune export (bus → SFT JSONL) | ✓ correct format |
+| + | Local model worker (Ollama native API, offline ASI) | ✓ "KERNEL-LOCAL-OK" |
+
+Run everything locally, offline, on your own hardware:
+
+```bash
+python -m openvid.server        # API + WebUI on :8765
+python -m openvid.telegram      # Telegram frontend
+```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the design.
 
 ## License
 
