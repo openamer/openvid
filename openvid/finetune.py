@@ -14,7 +14,11 @@ from pathlib import Path
 
 def export_sft(bus_db: Path, out: Path, min_len: int = 1) -> dict:
     """Pair each answered user.input with its result text."""
+    if not Path(bus_db).exists():
+        return {"pairs": 0, "out": str(out)}
     db = sqlite3.connect(str(bus_db))
+    if not db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='events'").fetchone():
+        return {"pairs": 0, "out": str(out)}
     inputs = {r[0]: r[1] for r in db.execute(
         "SELECT eid, payload FROM events WHERE topic='user.input' AND done=1")}
     pairs = []

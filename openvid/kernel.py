@@ -85,16 +85,19 @@ class Kernel:
                         "error": f"{type(e).__name__}: {e}"})
 
     def _route(self, topic: str, action: str):
-        """Pick the worker registered for this topic+action."""
+        """Pick the worker registered for this topic+action.
+        Workers WITH an `actions` set only get actions they declare;
+        workers without (topic-level, e.g. agent-loop) take everything.
+        Returns None only when nobody can handle it."""
         candidates = self._routes.get(topic, [])
         for w in candidates:
             actions = getattr(w, "actions", None)
-            if actions is not None:
-                if action in actions:
-                    return w
-            else:
-                return w  # worker handles whole topic (e.g. agent-loop, llm)
-        return candidates[0] if candidates else None
+            if actions is not None and action in actions:
+                return w
+        for w in candidates:
+            if getattr(w, "actions", None) is None:
+                return w
+        return None
 
     def start(self):
         self._running = True
