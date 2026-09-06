@@ -27,6 +27,8 @@ from .swarm import SwarmWorker
 from .adaptive_llm import AdaptiveLocalLLM
 from .selfimprove import SelfImprovement
 from .learnloop import LearnLoop
+from .voice import stt_openai, tts_openai
+from . import gateway as gw
 from .webui import WEBUI_HTML
 
 
@@ -63,6 +65,13 @@ def run(port: int = 8765, home=None):
     si = SelfImprovement(k.home, k.bus, auto_approve=auto)
     si.start(interval=float(os.environ.get("OPENVID_SI_INTERVAL", "3600")))
     LearnLoop(k.home, k.bus).start()
+    # multi-channel messaging (opt-in via env tokens)
+    if any(os.environ.get(x) for x in
+           ("OPENVID_TG_TOKEN", "OPENVID_DISCORD_TOKEN", "OPENVID_WEBHOOK_PORT")):
+        def ask_with_session(text, session_id="default"):
+            return k.ask(text, session_id=session_id)
+        import threading as _th
+        _th.Thread(target=gw.run_gateway, args=(ask_with_session,), daemon=True).start()
 
     class Handler(BaseHTTPRequestHandler):
         def _send(self, code, data):
@@ -82,6 +91,22 @@ def run(port: int = 8765, home=None):
                 self.end_headers()
                 self.wfile.write(body)
                 return
+            if self.path.startswith("/tts?"):
+                qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                text = (qs.get("text") or [""])[0]
+                key = os.environ.get("OPENAI_API_KEY", "")
+                if not (text and key):
+                    return self._send(400, {"error": "text + OPENAI_API_KEY required"})
+                try:
+                    mp3 = tts_openai(text, key)
+                    self.send_response(200)
+                    self.send_header("Content-Type", "audio/mpeg")
+                    self.send_header("Content-Length", str(len(mp3)))
+                    self.end_headers()
+                    self.wfile.write(mp3)
+                except Exception as e:
+                    self._send(502, {"error": str(e)})
+                return
             if self.path == "/health":
                 return self._send(200, {
                     "status": "alive", "workers": list(k.workers),
@@ -97,6 +122,21 @@ def run(port: int = 8765, home=None):
                         return self._send(200, p)
                 return self._send(404, {"error": "not ready or unknown eid"})
             self._send(404, {"error": "unknown"})
+
+        def _stt(self):
+            n = int(self.headers.get("Content-Length", 0))
+            try:
+                payload = json.loads(self.rfile.read(n) or b"{}")
+            except json.JSONDecodeError:
+                return self._send(400, {"error": "bad json"})
+            audio = payload.get("audio", "")
+            key = os.environ.get("OPENAI_API_KEY", "")
+            if not (audio and key):
+                return self._send(400, {"error": "audio + OPENAI_API_KEY required"})
+            try:
+                return self._send(200, stt_openai(audio, key))
+            except Exception as e:
+                return self._send(502, {"error": str(e)})
 
         def do_POST(self):
             n = int(self.headers.get("Content-Length", 0))
@@ -119,6 +159,17 @@ def run(port: int = 8765, home=None):
                     k.bus.publish("agent.action", p)
                     eid = ev["eid"]
                 return self._send(200, {"eid": eid})
+            if self.path == "/stt":
+                return self._stt()
+            if self.path == "/config":
+                allowed = {"OPENVID_LLM_MODEL", "OPENVID_FILES_ROOT",
+                           "OPENVID_AUTO_APPROVE", "OPENVID_AGENT_MODE",
+                           "OPENVID_ADAPTIVE_LOCAL"}
+                changes = {kk: str(vv) for kk, vv in payload.items() if kk in allowed}
+                for kk, vv in changes.items():
+                    os.environ[kk] = vv
+                return self._send(200, {"ok": True, "applied": changes,
+                                        "note": "model/pool changes apply on restart"})
             self._send(404, {"error": "unknown"})
 
         def log_message(self, *a):

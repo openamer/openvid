@@ -1,72 +1,76 @@
 # OPENVID
 
-**An independent event-kernel ASI runtime.** No forks, no shared code with any
-other agent project — 100% original architecture built from scratch.
+**An independent, self-improving agent runtime. No forks, no shared code —
+100% original architecture that runs entirely on your machine.**
 
-## Why OPENVID is different
+OPENVID is not a chatbot wrapper. It is a small kernel with a durable event
+bus and a growing fleet of workers — including an agent loop where the LLM
+*decides itself* which tools to use, learns from its own traffic via LoRA
+fine-tuning, and improves its skills from its own failures.
 
-Every mainstream agent framework follows the same pattern: a monolithic
-agent-core that carries a giant tool schema on every model call. OPENVID
-inverts this:
+```
+you ──> kernel (events + gate) ──> workers: shell · files · web · browser
+        │                            memory · skills · cron · sys · swarm
+        └── agent-loop (LLM picks tools) ──> local fine-tuned model or cloud
+```
 
-- **A tiny kernel that knows only events.** ~100 lines. It routes, gates,
-  and does nothing else.
-- **Everything is a Worker.** Shell, memory, LLM, browser, cron — isolated
-  handlers that subscribe to topics on a durable SQLite event bus. Crash-safe:
-  a failing worker never takes the runtime down.
-- **The bus is the memory.** Every event is persisted (WAL mode). Full audit
-  trail by default. Recover from any crash by replaying.
-- **Frontends are peers, not privileged.** CLI, desktop, and messengers all
-  publish/subscribe on the same bus.
+## What makes it different
 
-## Status
+| | Typical framework | OPENVID |
+|---|---|---|
+| Core | monolithic agent + giant tool schema | ~1800-line kernel, tools are workers |
+| Tool calls | hard-coded dispatch | **the model decides**, gate enforces policy |
+| Memory | bolted-on vector DB | durable SQLite event bus = audit trail = training data |
+| Learning | static | **LoRA fine-tune on its own conversations**, hot-swapped live |
+| Failure handling | crash | failed results become skill-improvement proposals |
+| Access | one web UI | CLI · WebUI · Desktop (tray) · Telegram · Discord · Webhook |
 
-Phase 1 — core runtime, verified end-to-end:
+## Features (all live-verified)
 
-- [x] Durable event bus (SQLite WAL, claim/complete, crash-safe)
-- [x] Kernel event loop with permission gate (allow/confirm/deny as data)
-- [x] Shell worker (gated execution)
-- [x] Memory worker (episodic write/search)
-- [x] LLM worker (any OpenAI-compatible endpoint: OpenRouter, local, GPU)
-- [x] CLI REPL + one-shot mode (`openvid -p "..."`)
-- [x] Live-verified: bus roundtrip, gate denial, memory, real LLM answer
+- **Autonomous agent loop** — LLM chains tools (shell → browser → memory …)
+  up to 8 steps, full permission gate (`allow`/`confirm`/`deny` as data)
+- **Full machine access** — files anywhere, any shell command; only destructive
+  ops (`file.delete`, `shell.rm`) ask for confirmation
+- **Multi-turn sessions** with history injection
+- **Self-improvement** — error clustering → skill proposals; nightly LoRA
+  training on own traffic; **hot-swap** of the trained adapter without restart
+- **Local-first** — runs on Ollama/your GPU; cloud LLM optional fallback
+- **Voice** — mic input (Whisper STT) + spoken answers (OpenAI TTS)
+- **Multi-channel** — Telegram, Discord, generic webhooks
+- **Desktop app** — Electron shell with tray keep-alive
+- **Windows service** — autostart, crash-restart, 24/7
 
 ## Quick start
 
 ```bash
 pip install -e .
-export OPENVID_LLM_KEY=sk-or-...        # OpenRouter key
-export OPENVID_LLM_MODEL=z-ai/glm-5.3-flash
-openvid -p "Say OPENVID-OK"             # one-shot
-openvid                                  # REPL (/run <cmd>, /remember <note>, /quit)
+export OPENVID_LLM_KEY=sk-or-...          # or run fully local via Ollama
+openvid -p "Say OPENVID-OK"               # one-shot
+openvid                                    # REPL
+
+python -m openvid.server                   # WebUI + API on :8765
+python scripts/install-service.ps1         # 24/7 Windows service
+python -m openvid.telegram                 # Telegram frontend
 ```
+
+Desktop: `cd desktop && npm install && npm start`
 
 ## Architecture
 
-## Status: Phases 1–10 complete
+[ARCHITECTURE.md](ARCHITECTURE.md) — event bus, worker protocol, permission
+gate, learning loop.
 
-| Phase | Feature | Verified |
-|---|---|---|
-| 1 | Kernel + durable bus + shell/memory/llm workers + CLI | ✓ 7/7 checks |
-| 2 | Browser worker (Chrome via CDP :9222) | ✓ eval "Example Domain" |
-| 3 | Skills (markdown, path-traversal guarded) | ✓ write/list/get |
-| 4 | Cron (durable, daily@HH:MM + intervals, fires via bus) | ✓ job fired |
-| 5 | HTTP API (/health /ask /action /result) | ✓ /ask → real answer |
-| 6 | Self-improvement (error clustering → skill proposals) | ✓ proposal written |
-| 7 | Telegram frontend (long-polling bus client) | ✓ code + API format |
-| 8 | WebUI (zero-build chat, served at /) | ✓ HTML + /ask OK |
-| 9 | Swarm mesh (health-probed peers, no coordinator) | ✓ live cross-node ask |
-| 10 | Fine-tune export (bus → SFT JSONL) | ✓ correct format |
-| + | Local model worker (Ollama native API, offline ASI) | ✓ "KERNEL-LOCAL-OK" |
+## Tests
 
-Run everything locally, offline, on your own hardware:
+`pytest tests/` — 32 tests: bus durability, gate semantics, dispatcher
+routing, session handling, sandbox-free file access, web, agent-loop
+logic (fake-LLM), server wiring, learning-loop state machine.
 
-```bash
-python -m openvid.server        # API + WebUI on :8765
-python -m openvid.telegram      # Telegram frontend
-```
+## Status
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the design.
+Alpha, single-user, Windows-first (Linux/macOS work for the core).
+Roadmap: streaming responses, Discord gateway mode, multi-machine swarm
+auth, docs site.
 
 ## License
 
