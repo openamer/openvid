@@ -58,6 +58,19 @@ TOOL_SPECS = {
                    "desc": "Web search (DuckDuckGo), returns top results."},
     "sys.info": {"args": {}, "desc": "CPU/RAM/disk/uptime snapshot of this machine."},
     "swarm.status": {"args": {}, "desc": "Check peer nodes in the swarm."},
+    "darwin.stats": {"args": {}, "desc": "Skill-evolution leaderboard (wins/losses)."},
+    "darwin.best": {"args": {"n": "count"}, "desc": "Strongest evolved skills."},
+    "darwin.import": {"args": {"n": "count"}, "desc": "Import top evolved skills into own skills/."},
+    "darwin.evolve": {"args": {}, "desc": "Archive error-born skills (own evolution step)."},
+    "long.write": {"args": {"text": "episode", "tags": ["tag1"]},
+                   "desc": "Store a tagged long-term memory episode."},
+    "long.search": {"args": {"query": "keywords", "k": "count"},
+                    "desc": "Keyword-scored search in long-term memory."},
+    "long.stats": {"args": {}, "desc": "Episode count + tag histogram."},
+    "cu.screenshot": {"args": {}, "desc": "Screenshot of the desktop (SOM overlay)."},
+    "cu.click": {"args": {"element": "element index"}, "desc": "Click a UI element."},
+    "cu.type": {"args": {"text": "text"}, "desc": "Type text into the focused window."},
+    "cu.key": {"args": {"keys": "combo"}, "desc": "Send a key combo (ctrl+s etc.)."},
 }
 
 

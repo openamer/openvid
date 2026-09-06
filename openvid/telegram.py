@@ -15,6 +15,8 @@ from .kernel import Kernel
 from .workers import LLMWorker, MemoryWorker, ShellWorker
 from .skills import SkillWorker
 from .files import FileWorker
+from .darwin import DarwinWorker
+from .longmemory import LongMemoryWorker
 from .web import WebWorker
 from .sysinfo import SysWorker
 from .swarm import SwarmWorker
@@ -43,6 +45,8 @@ def run(home=None):
     k.register(MemoryWorker(k.home))
     k.register(SkillWorker(k.home))
     k.register(FileWorker(k.home))
+    k.register(DarwinWorker(k.home))
+    k.register(LongMemoryWorker(k.home))
     k.register(WebWorker())
     k.register(SysWorker())
     k.register(SwarmWorker())

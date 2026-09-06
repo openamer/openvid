@@ -25,6 +25,9 @@ from .web import WebWorker
 from .sysinfo import SysWorker
 from .swarm import SwarmWorker
 from .adaptive_llm import AdaptiveLocalLLM
+from .darwin import DarwinWorker
+from .longmemory import LongMemoryWorker
+from .computer_use import ComputerUseWorker
 from .selfimprove import SelfImprovement
 from .learnloop import LearnLoop
 from .voice import stt_openai, tts_openai
@@ -41,6 +44,9 @@ def _build_kernel(home=None) -> Kernel:
     k.register(WebWorker())
     k.register(SysWorker())
     k.register(SwarmWorker())
+    k.register(DarwinWorker(k.home))
+    k.register(LongMemoryWorker(k.home))
+    k.register(ComputerUseWorker())
     if os.environ.get("OPENVID_ADAPTIVE_LOCAL", "1") == "1":
         k.register(AdaptiveLocalLLM(k.home))
     base = os.environ.get("OPENVID_LLM_BASE", "https://openrouter.ai/api/v1")

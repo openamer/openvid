@@ -30,7 +30,9 @@ class Kernel:
             "allow": ["shell.run", "memory.read", "memory.write", "llm.chat", "file.read",
                       "file.write", "file.list", "file.delete", "web.fetch", "web.search",
                       "browser.open", "browser.eval", "skill.get", "skill.list", "sys.info",
-                      "swarm.status", "swarm.ask", "swarm.run"],
+                      "swarm.status", "swarm.ask", "swarm.run", "darwin.stats", "darwin.best", "darwin.weakest",
+                      "darwin.import", "darwin.evolve", "long.write", "long.search",
+                      "long.stats", "cu.screenshot", "cu.click", "cu.type", "cu.key"],
             "confirm": ["shell.rm", "shell.sudo", "file.delete"],
             "deny": []
         }
