@@ -123,12 +123,7 @@ def run(port: int = 8765, home=None):
                 return self._send(404, {"error": "not ready or unknown eid"})
             self._send(404, {"error": "unknown"})
 
-        def _stt(self):
-            n = int(self.headers.get("Content-Length", 0))
-            try:
-                payload = json.loads(self.rfile.read(n) or b"{}")
-            except json.JSONDecodeError:
-                return self._send(400, {"error": "bad json"})
+        def _stt(self, payload):
             audio = payload.get("audio", "")
             key = os.environ.get("OPENAI_API_KEY", "")
             if not (audio and key):
@@ -160,7 +155,7 @@ def run(port: int = 8765, home=None):
                     eid = ev["eid"]
                 return self._send(200, {"eid": eid})
             if self.path == "/stt":
-                return self._stt()
+                return self._stt(payload)
             if self.path == "/config":
                 allowed = {"OPENVID_LLM_MODEL", "OPENVID_FILES_ROOT",
                            "OPENVID_AUTO_APPROVE", "OPENVID_AGENT_MODE",
